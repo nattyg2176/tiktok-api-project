@@ -604,24 +604,32 @@
         document.getElementById('loading').style.display = 'none';
     }
 </script>
+  
+  
   <script>
-  async function testTikTokSearch() {
+  async function searchVideos() {
+    const keyword = document.querySelector('input[type="text"]').value;
+    const maxVideos = parseInt(document.querySelector('select[name="videoCount"]').value) || 4;
+    const days = document.querySelector('select[name="dateRange"]').value === "today" ? 1 : 7;
+
     const response = await fetch('/.netlify/functions/tiktok-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        keyword: 'fitness',
-        maxVideos: 5,
-        days: 7
-      })
+      body: JSON.stringify({ keyword, maxVideos, days })
     });
 
     const data = await response.json();
-    console.log('TikTok Data:', data);
+    console.log("TikTok Data:", data);
+    // You can now display it on the page however you want
   }
 
-  testTikTokSearch();
+  // Optional: connect button
+  document.querySelector('.search-btn')?.addEventListener('click', searchVideos);
 </script>
+
+
+
+
   
 </body>
 </html>
