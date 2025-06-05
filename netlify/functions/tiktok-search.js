@@ -1,7 +1,18 @@
-const fetch = require('node-fetch');
-
 exports.handler = async function(event, context) {
   const apiKey = process.env.APIFY_API_KEY;
+
+  // Handle OPTIONS request for CORS
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
 
   try {
     const { keyword, maxVideos = 10, days = 7 } = JSON.parse(event.body);
@@ -9,11 +20,16 @@ exports.handler = async function(event, context) {
     if (!keyword) {
       return {
         statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
         body: JSON.stringify({ error: 'Missing keyword' }),
       };
     }
 
-    const runSync = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/run-sync', {
+    // Start the actor run
+    const runResponse = await fetch('https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -21,50 +37,73 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({
         searchQueries: [keyword],
-        maxVideos,
-        sort: 'views',
-        maxVideoAge: days
+        maxItems: maxVideos,
+        resultsPerPage: maxVideos,
+        maxPostAge: days
       })
     });
 
-    const runData = await runSync.json();
-
-    if (!runSync.ok || !runData.data?.defaultDatasetId) {
-      return {
-        statusCode: 502,
-        body: JSON.stringify({ error: 'Could not run Apify actor' })
-      };
+    if (!runResponse.ok) {
+      throw new Error(`Apify error: ${runResponse.status}`);
     }
 
-    const resultRes = await fetch(`https://api.apify.com/v2/datasets/${runData.data.defaultDatasetId}/items?clean=true`, {
+    const runData = await runResponse.json();
+    const runId = runData.data.id;
+
+    // Wait for the run to complete
+    let status = 'RUNNING';
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    while (status === 'RUNNING' && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      
+      const statusResponse = await fetch(`https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs/${runId}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      
+      const statusData = await statusResponse.json();
+      status = statusData.data.status;
+      attempts++;
+    }
+
+    if (status !== 'SUCCEEDED') {
+      throw new Error('Scraping failed or timed out');
+    }
+
+    // Get results
+    const resultsResponse = await fetch(`https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs/${runId}/dataset/items`, {
       headers: { 'Authorization': `Bearer ${apiKey}` }
     });
 
-    const results = await resultRes.json();
+    const results = await resultsResponse.json();
 
     if (!results || results.length === 0) {
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ message: 'No viral videos found for this query.' })
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ videos: [], message: 'No viral videos found for this query.' })
       };
     }
 
     const formatted = results.slice(0, maxVideos).map(video => ({
       id: video.id || 'unknown',
-      desc: video.text || 'No description',
+      desc: video.text || video.desc || 'No description',
       stats: {
-        playCount: video.playCount || 0,
-        shareCount: video.shareCount || 0,
-        diggCount: video.diggCount || 0,
-        commentCount: video.commentCount || 0
+        playCount: video.playCount || video.stats?.playCount || 0,
+        shareCount: video.shareCount || video.stats?.shareCount || 0,
+        diggCount: video.diggCount || video.stats?.diggCount || 0,
+        commentCount: video.commentCount || video.stats?.commentCount || 0
       },
       author: {
-        name: video.authorMeta?.name || 'unknown',
-        avatar: video.authorMeta?.avatar || ''
+        name: video.authorMeta?.name || video.author?.uniqueId || 'unknown',
+        avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
       },
-      webVideoUrl: video.webVideoUrl || '',
-      coverUrl: video.videoMeta?.cover || ''
+      webVideoUrl: video.webVideoUrl || video.link || '',
+      coverUrl: video.videoMeta?.cover || video.video?.cover || ''
     }));
 
     return {
@@ -79,8 +118,13 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
+    console.error('Error:', error);
     return {
       statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({ error: 'Server error: ' + error.message })
     };
   }
