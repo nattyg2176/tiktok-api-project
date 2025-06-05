@@ -80,6 +80,7 @@
         .api-section h3 {
             color: #00f2ea;
             margin-bottom: 15px;
+            font-size: 18px;
         }
 
         .api-input {
@@ -103,6 +104,15 @@
             font-size: 14px;
         }
 
+        .api-help a {
+            color: #00f2ea;
+            text-decoration: none;
+        }
+
+        .api-help a:hover {
+            text-decoration: underline;
+        }
+
         /* Search Section */
         .search-section {
             background: #1a1a1a;
@@ -110,6 +120,12 @@
             padding: 30px;
             margin-bottom: 30px;
             border: 1px solid #333;
+        }
+
+        .search-section h3 {
+            color: #ff0050;
+            margin-bottom: 20px;
+            font-size: 18px;
         }
 
         .search-row {
@@ -431,9 +447,10 @@
             <p class="subtitle">Built for Creators. Fueled by Viral Trends.</p>
         </div>
 
-       
+
 
         <div class="search-section">
+            <h3>🔍 Search for Trending Videos</h3>
             <div class="search-row">
                 <input type="text" class="search-input" id="keyword" placeholder="Enter niche or keyword (e.g., cooking, fitness, comedy)">
                 <select class="time-filter" id="timeFilter">
@@ -465,171 +482,269 @@
 
         <div class="error" id="error"></div>
 
-        <div class="results" id="results">
-            <div class="download-all-section" id="downloadAllSection">
+        <div class="results" id="results" style="display: block;">
+            <div class="download-all-section" id="downloadAllSection" style="display: block;">
                 <button class="download-all-btn" onclick="downloadAllHooks()">📥 Download All Hooks</button>
             </div>
-            <div id="videoList"></div>
+            <div id="videoList">
+                <!-- Sample results shown by default -->
+                <div class="video-card">
+                    <div class="video-header">
+                        <div class="video-title">Top Video #1 by @financialfreedomcreator1</div>
+                        <button class="save-btn" onclick="saveHook(0)">💾 Save Hook</button>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-info">
+                            <div class="video-stats">
+                                <div class="stat">👁️ <span class="stat-value">1.1M</span> views</div>
+                                <div class="stat">❤️ <span class="stat-value">657.3K</span> likes</div>
+                                <div class="stat">🔄 <span class="stat-value">33.0K</span> shares</div>
+                                <div class="stat">💬 <span class="stat-value">4.8K</span> comments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">This money mindset shift changed everything for me</div></div>
+                    <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">POV: You realize money isn't the root of all evil, but the lack of it is</div></div>
+                    <div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">#financialfreedom #moneymindset #wealth #success #viral</div></div>
+                    <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">POV: You realize money isn't the root of all evil, but the lack of it is. This mindset shift literally changed my entire financial situation. Here's what I learned... #financialfreedom #moneymindset #wealth #success #viral</div></div>
+                    <a href="#" class="video-link">Watch on TikTok →</a>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-header">
+                        <div class="video-title">Top Video #2 by @wealthbuilder22</div>
+                        <button class="save-btn" onclick="saveHook(1)">💾 Save Hook</button>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-info">
+                            <div class="video-stats">
+                                <div class="stat">👁️ <span class="stat-value">890.2K</span> views</div>
+                                <div class="stat">❤️ <span class="stat-value">445.7K</span> likes</div>
+                                <div class="stat">🔄 <span class="stat-value">28.3K</span> shares</div>
+                                <div class="stat">💬 <span class="stat-value">3.2K</span> comments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">The investment strategy nobody talks about</div></div>
+                    <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">Why are we not taught this in school? This investment strategy could change your life</div></div>
+                    <div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">#investing #stocks #financialfreedom #money #wealth</div></div>
+                    <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">Why are we not taught this in school? This investment strategy could change your life but they keep it hidden from us. Here's the truth... #investing #stocks #financialfreedom #money #wealth</div></div>
+                    <a href="#" class="video-link">Watch on TikTok →</a>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-header">
+                        <div class="video-title">Top Video #3 by @moneycoach99</div>
+                        <button class="save-btn" onclick="saveHook(2)">💾 Save Hook</button>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-info">
+                            <div class="video-stats">
+                                <div class="stat">👁️ <span class="stat-value">756.8K</span> views</div>
+                                <div class="stat">❤️ <span class="stat-value">321.4K</span> likes</div>
+                                <div class="stat">🔄 <span class="stat-value">19.7K</span> shares</div>
+                                <div class="stat">💬 <span class="stat-value">2.9K</span> comments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">I wish someone told me this at 18</div></div>
+                    <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">If I knew this money secret at 18, I'd be a millionaire by now</div></div>
+                    <div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">#money #youngentrepreneur #financialtips #wealth #success</div></div>
+                    <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">If I knew this money secret at 18, I'd be a millionaire by now. Don't make the same mistake I did. Start doing this TODAY... #money #youngentrepreneur #financialtips #wealth #success</div></div>
+                    <a href="#" class="video-link">Watch on TikTok →</a>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-header">
+                        <div class="video-title">Top Video #4 by @passiveincome101</div>
+                        <button class="save-btn" onclick="saveHook(3)">💾 Save Hook</button>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-info">
+                            <div class="video-stats">
+                                <div class="stat">👁️ <span class="stat-value">623.5K</span> views</div>
+                                <div class="stat">❤️ <span class="stat-value">289.1K</span> likes</div>
+                                <div class="stat">🔄 <span class="stat-value">15.4K</span> shares</div>
+                                <div class="stat">💬 <span class="stat-value">2.1K</span> comments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">How I make $500 a day doing absolutely nothing</div></div>
+                    <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">POV: You discover how to make money while you sleep</div></div>
+                    <div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">#passiveincome #makemoneyonline #financialfreedom #entrepreneur</div></div>
+                    <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">POV: You discover how to make money while you sleep. This passive income stream changed my life and it can change yours too. Here's exactly how I do it... #passiveincome #makemoneyonline #financialfreedom #entrepreneur</div></div>
+                    <a href="#" class="video-link">Watch on TikTok →</a>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-         function formatNumber(num) {
-        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-        return num.toString();
-    }
+        let currentVideos = [];
 
-    function extractHook(description) {
-        if (!description) return "No hook available";
-        const sentences = description.match(/[^.!?]+[.!?]+/g);
-        return sentences && sentences[0] ? sentences[0].trim() : description.substring(0, 100) + (description.length > 100 ? '...' : '');
-    }
-
-    function extractTitle(description) {
-        const textBeforeHashtags = description.split('#')[0].trim();
-        const firstSentence = textBeforeHashtags.match(/^[^.!?]+/);
-        return firstSentence ? firstSentence[0].trim() : textBeforeHashtags.substring(0, 60) + '...';
-    }
-
-    function extractHashtags(description) {
-        const hashtags = description.match(/#\w+/g) || [];
-        return hashtags.join(' ');
-    }
-
-    async function searchVideos() {
-        const apiKey = document.getElementById('apiKey').value;
-        const keyword = document.getElementById('keyword').value;
-        const timeFilter = parseInt(document.getElementById('timeFilter').value);
-        const videoCount = parseInt(document.getElementById('videoCount').value);
-
-        if (!apiKey) return showError('Please enter your Apify API key first!');
-        if (!keyword) return showError('Please enter a keyword or niche to search!');
-
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('results').style.display = 'none';
-
-        try {
-            const response = await fetch('/.netlify/functions/tiktok-search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ apiKey, keyword, days: timeFilter, maxVideos: videoCount })
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || 'Failed to fetch videos');
-
-            displayResults(data.videos.slice(0, videoCount));
-
-        } catch (error) {
-            const demoTemplates = [...Array(10)].map((_, i) => `Demo video ${i + 1}: Amazing ${keyword} tip!`);
-            const now = Date.now() / 1000;
-            const demoVideos = demoTemplates.map((desc, i) => ({
-                id: `${i + 1}`,
-                desc: desc + ` #${keyword} #viral`,
-                stats: {
-                    playCount: Math.random() * 5e6 + 5e5,
-                    shareCount: Math.random() * 1e5 + 1e4,
-                    diggCount: Math.random() * 8e5 + 5e4,
-                    commentCount: Math.random() * 2e4 + 1e3
-                },
-                createTime: now - (86400 * (i + 1)),
-                author: { uniqueId: `${keyword}creator${i + 1}` }
-            }));
-
-            const filtered = demoVideos.filter(v => v.createTime >= now - (timeFilter * 86400));
-            displayResults(filtered.slice(0, videoCount));
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
         }
-    }
 
-    function displayResults(videos) {
-        currentVideos = videos;
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('results').style.display = 'block';
-        document.getElementById('downloadAllSection').style.display = videos.length > 0 ? 'block' : 'none';
+        function extractHook(description) {
+            if (!description) return "No hook available";
+            const sentences = description.match(/[^.!?]+[.!?]+/g);
+            return sentences && sentences[0] ? sentences[0].trim() : description.substring(0, 100) + (description.length > 100 ? '...' : '');
+        }
 
-        const videoList = document.getElementById('videoList');
-        videoList.innerHTML = '';
+        function extractTitle(description) {
+            const textBeforeHashtags = description.split('#')[0].trim();
+            const firstSentence = textBeforeHashtags.match(/^[^.!?]+/);
+            return firstSentence ? firstSentence[0].trim() : textBeforeHashtags.substring(0, 60) + '...';
+        }
 
-        videos.forEach((video, index) => {
-            const hook = extractHook(video.desc);
-            const title = extractTitle(video.desc);
-            const hashtags = extractHashtags(video.desc);
-            const card = document.createElement('div');
-            card.className = 'video-card';
+        function extractHashtags(description) {
+            const hashtags = description.match(/#\w+/g) || [];
+            return hashtags.join(' ');
+        }
 
-            card.innerHTML = `
-                <div class="video-header">
-                    <div class="video-title">Top Video #${index + 1} by @${video.author.uniqueId}</div>
-                    <button class="save-btn" onclick="saveHook(${index})">💾 Save Hook</button>
-                </div>
-                <div class="video-content">
-                    <div><img src="" class="video-thumbnail" style="display:none;"></div>
-                    <div class="video-info">
-                        <div class="video-stats">
-                            <div class="stat">👁️ <span class="stat-value">${formatNumber(video.stats.playCount)}</span> views</div>
-                            <div class="stat">❤️ <span class="stat-value">${formatNumber(video.stats.diggCount)}</span> likes</div>
-                            <div class="stat">🔄 <span class="stat-value">${formatNumber(video.stats.shareCount)}</span> shares</div>
-                            <div class="stat">💬 <span class="stat-value">${formatNumber(video.stats.commentCount)}</span> comments</div>
+        async function searchVideos() {
+            const keyword = document.getElementById('keyword').value;
+            const timeFilter = parseInt(document.getElementById('timeFilter').value);
+            const videoCount = parseInt(document.getElementById('videoCount').value);
+
+            if (!keyword) return showError('Please enter a keyword or niche to search!');
+
+            // Show loading, hide results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/.netlify/functions/tiktok-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword, days: timeFilter, maxVideos: videoCount })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Failed to fetch videos');
+
+                displayResults(data.videos.slice(0, videoCount));
+
+            } catch (error) {
+                console.log('Using demo data since API failed:', error);
+                // Demo data for testing
+                const demoTemplates = [
+                    `Amazing ${keyword} tip that will blow your mind!`,
+                    `This ${keyword} hack changed my life forever`,
+                    `POV: You discover the best ${keyword} secret`,
+                    `Why nobody talks about this ${keyword} trick`,
+                    `The ${keyword} method that actually works`,
+                    `I wish I knew this ${keyword} tip sooner`,
+                    `This ${keyword} strategy is pure genius`,
+                    `Everyone should know this ${keyword} fact`,
+                    `The truth about ${keyword} nobody tells you`,
+                    `Mind-blowing ${keyword} results in 24 hours`
+                ];
+                
+                const now = Date.now() / 1000;
+                const demoVideos = demoTemplates.map((desc, i) => ({
+                    id: `demo${i + 1}`,
+                    desc: desc + ` #${keyword} #viral #fyp`,
+                    stats: {
+                        playCount: Math.floor(Math.random() * 5000000) + 500000,
+                        shareCount: Math.floor(Math.random() * 100000) + 10000,
+                        diggCount: Math.floor(Math.random() * 800000) + 50000,
+                        commentCount: Math.floor(Math.random() * 20000) + 1000
+                    },
+                    createTime: now - (86400 * (i + 1)),
+                    author: { uniqueId: `${keyword}creator${i + 1}` }
+                }));
+
+                const filtered = demoVideos.filter(v => v.createTime >= now - (timeFilter * 86400));
+                displayResults(filtered.slice(0, videoCount));
+            }
+        }
+
+        function displayResults(videos) {
+            currentVideos = videos;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('downloadAllSection').style.display = videos.length > 0 ? 'block' : 'none';
+
+            const videoList = document.getElementById('videoList');
+            videoList.innerHTML = '';
+
+            videos.forEach((video, index) => {
+                const hook = extractHook(video.desc);
+                const title = extractTitle(video.desc);
+                const hashtags = extractHashtags(video.desc);
+                const card = document.createElement('div');
+                card.className = 'video-card';
+
+                card.innerHTML = `
+                    <div class="video-header">
+                        <div class="video-title">Top Video #${index + 1} by @${video.author.uniqueId}</div>
+                        <button class="save-btn" onclick="saveHook(${index})">💾 Save Hook</button>
+                    </div>
+                    <div class="video-content">
+                        <div class="video-info">
+                            <div class="video-stats">
+                                <div class="stat">👁️ <span class="stat-value">${formatNumber(video.stats.playCount)}</span> views</div>
+                                <div class="stat">❤️ <span class="stat-value">${formatNumber(video.stats.diggCount)}</span> likes</div>
+                                <div class="stat">🔄 <span class="stat-value">${formatNumber(video.stats.shareCount)}</span> shares</div>
+                                <div class="stat">💬 <span class="stat-value">${formatNumber(video.stats.commentCount)}</span> comments</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">${title}</div></div>
-                <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">${hook}</div></div>
-                ${hashtags ? `<div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">${hashtags}</div></div>` : ''}
-                <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">${video.desc}</div></div>
-                <a href="https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}" target="_blank" class="video-link">Watch on TikTok →</a>
-            `;
+                    <div class="hook-section"><div class="hook-label">📌 TITLE:</div><div class="hook-text">${title}</div></div>
+                    <div class="hook-section"><div class="hook-label">🎯 HOOK:</div><div class="hook-text">${hook}</div></div>
+                    ${hashtags ? `<div class="hook-section"><div class="hook-label">#️⃣ HASHTAGS:</div><div class="hook-text">${hashtags}</div></div>` : ''}
+                    <div class="hook-section"><div class="hook-label">📝 FULL DESCRIPTION:</div><div class="hook-text">${video.desc}</div></div>
+                    <a href="https://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}" target="_blank" class="video-link">Watch on TikTok →</a>
+                `;
 
-            videoList.appendChild(card);
-        });
-    }
+                videoList.appendChild(card);
+            });
+        }
 
-    function saveHook(index) {
-        const v = currentVideos[index];
-        const content = `TikTok Hook #${index + 1}\nAuthor: @${v.author.uniqueId}\nStats: ${formatNumber(v.stats.playCount)} views, ${formatNumber(v.stats.diggCount)} likes\n\nHOOK: ${extractHook(v.desc)}\n\nFULL DESCRIPTION:\n${v.desc}`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `tiktok-hook-${index + 1}.txt`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-    }
+        function saveHook(index) {
+            const v = currentVideos[index];
+            const content = `TikTok Hook #${index + 1}\nAuthor: @${v.author.uniqueId}\nStats: ${formatNumber(v.stats.playCount)} views, ${formatNumber(v.stats.diggCount)} likes\n\nHOOK: ${extractHook(v.desc)}\n\nFULL DESCRIPTION:\n${v.desc}`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `tiktok-hook-${index + 1}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
 
-    function showError(msg) {
-        const e = document.getElementById('error');
-        e.textContent = msg;
-        e.style.display = 'block';
-        document.getElementById('loading').style.display = 'none';
-    }
-</script>
-  
-  
-  <script>
-  async function searchVideos() {
-    const keyword = document.querySelector('input[type="text"]').value;
-    const maxVideos = parseInt(document.querySelector('select[name="videoCount"]').value) || 4;
-    const days = document.querySelector('select[name="dateRange"]').value === "today" ? 1 : 7;
+        function downloadAllHooks() {
+            if (!currentVideos.length) return;
+            
+            let allContent = 'TrendTok AI - All Hooks\n' + '='.repeat(30) + '\n\n';
+            
+            currentVideos.forEach((video, index) => {
+                allContent += `HOOK #${index + 1}\n`;
+                allContent += `Author: @${video.author.uniqueId}\n`;
+                allContent += `Stats: ${formatNumber(video.stats.playCount)} views, ${formatNumber(video.stats.diggCount)} likes\n`;
+                allContent += `Hook: ${extractHook(video.desc)}\n`;
+                allContent += `Full Description: ${video.desc}\n`;
+                allContent += '-'.repeat(50) + '\n\n';
+            });
+            
+            const blob = new Blob([allContent], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'all-tiktok-hooks.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
 
-    const response = await fetch('/.netlify/functions/tiktok-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword, maxVideos, days })
-    });
-
-    const data = await response.json();
-    console.log("TikTok Data:", data);
-    // You can now display it on the page however you want
-  }
-
-  // Optional: connect button
-  document.querySelector('.search-btn')?.addEventListener('click', searchVideos);
-</script>
-
-
-
-
-  
+        function showError(msg) {
+            const e = document.getElementById('error');
+            e.textContent = msg;
+            e.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
