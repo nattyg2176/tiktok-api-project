@@ -104,23 +104,23 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Format the results - CRITICAL: Include uniqueId
+    // Format the results - Match EXACT Apify structure
     const formatted = results.slice(0, maxVideos).map(video => ({
       id: video.id || video.videoId || 'unknown',
-      desc: video.text || video.description || video.desc || 'No description',
+      desc: video.text || 'No description',
       stats: {
-        playCount: video.playCount || video.stats?.playCount || 0,
-        shareCount: video.shareCount || video.stats?.shareCount || 0,
-        diggCount: video.diggCount || video.stats?.diggCount || video.likeCount || 0,
-        commentCount: video.commentCount || video.stats?.commentCount || 0
+        playCount: video.playCount || 0,
+        shareCount: video.shareCount || 0,
+        diggCount: video.diggCount || 0,
+        commentCount: video.commentCount || 0
       },
       author: {
-        uniqueId: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
-        name: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
-        avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
+        uniqueId: video.authorMeta?.name || 'unknown',
+        name: video.authorMeta?.name || 'unknown',
+        avatar: video.authorMeta?.avatar || ''
       },
-      webVideoUrl: video.webVideoUrl || video.link || '',
-      coverUrl: video.videoMeta?.cover || video.video?.cover || video.covers?.default || ''
+      webVideoUrl: video.webVideoUrl || '',
+      coverUrl: video.covers?.default || ''
     }));
 
     return {
