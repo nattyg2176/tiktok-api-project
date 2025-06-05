@@ -29,17 +29,16 @@ exports.handler = async function(event, context) {
     }
 
     // Start the actor run
-    const runResponse = await fetch('https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs', {
+    const runResponse = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        searchQueries: [keyword],
-        maxItems: maxVideos,
+        searchTerms: [keyword],
         resultsPerPage: maxVideos,
-        maxPostAge: days
+        maxPostDate: new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
       })
     });
 
@@ -58,7 +57,7 @@ exports.handler = async function(event, context) {
     while (status === 'RUNNING' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
       
-      const statusResponse = await fetch(`https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs/${runId}`, {
+      const statusResponse = await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs/${runId}`, {
         headers: { 'Authorization': `Bearer ${apiKey}` }
       });
       
