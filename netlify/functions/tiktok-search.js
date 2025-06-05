@@ -17,6 +17,11 @@ exports.handler = async function(event, context) {
   try {
     const { keyword, maxVideos = 10, days = 7 } = JSON.parse(event.body);
 
+    // Debug logging
+    console.log('Received request:', { keyword, maxVideos, days });
+    console.log('API Key exists:', !!apiKey);
+    console.log('API Key length:', apiKey ? apiKey.length : 0);
+
     if (!keyword) {
       return {
         statusCode: 400,
@@ -28,7 +33,20 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Start the actor run
+    if (!apiKey) {
+      console.error('API Key is missing!');
+      return {
+        statusCode: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ error: 'API configuration error - missing API key' }),
+      };
+    }
+
+    // Start the actor run with correct parameters
+    console.log('Starting Apify actor...');
     const runResponse = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs', {
       method: 'POST',
       headers: {
@@ -36,18 +54,35 @@ exports.handler = async function(event, context) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        searchTerms: [keyword],
+        hashtags: [keyword],
         resultsPerPage: maxVideos,
-        maxPostDate: new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
+        proxyCountryCode: "None"
       })
     });
 
+    console.log('Run response status:', runResponse.status);
+    const runResponseText = await runResponse.text();
+    console.log('Run response body:', runResponseText);
+
     if (!runResponse.ok) {
-      throw new Error(`Apify error: ${runResponse.status}`);
+      console.error('Apify run failed:', runResponseText);
+      return {
+        statusCode: 502,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ 
+          error: 'Apify actor run failed', 
+          details: runResponseText,
+          status: runResponse.status 
+        })
+      };
     }
 
-    const runData = await runResponse.json();
+    const runData = JSON.parse(runResponseText);
     const runId = runData.data.id;
+    console.log('Run ID:', runId);
 
     // Wait for the run to complete
     let status = 'RUNNING';
@@ -55,27 +90,41 @@ exports.handler = async function(event, context) {
     const maxAttempts = 30;
 
     while (status === 'RUNNING' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const statusResponse = await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs/${runId}`, {
+      const statusResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
         headers: { 'Authorization': `Bearer ${apiKey}` }
       });
       
       const statusData = await statusResponse.json();
       status = statusData.data.status;
+      console.log(`Attempt ${attempts + 1}: Status = ${status}`);
       attempts++;
     }
 
     if (status !== 'SUCCEEDED') {
-      throw new Error('Scraping failed or timed out');
+      console.error('Scraping failed. Final status:', status);
+      return {
+        statusCode: 502,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ 
+          error: 'Scraping failed or timed out',
+          finalStatus: status 
+        })
+      };
     }
 
     // Get results
-    const resultsResponse = await fetch(`https://api.apify.com/v2/acts/emastra~tiktok-scraper/runs/${runId}/dataset/items`, {
+    console.log('Fetching results...');
+    const resultsResponse = await fetch(`https://api.apify.com/v2/datasets/${runData.data.defaultDatasetId}/items`, {
       headers: { 'Authorization': `Bearer ${apiKey}` }
     });
 
     const results = await resultsResponse.json();
+    console.log('Results count:', results.length);
 
     if (!results || results.length === 0) {
       return {
@@ -84,26 +133,31 @@ exports.handler = async function(event, context) {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         },
-        body: JSON.stringify({ videos: [], message: 'No viral videos found for this query.' })
+        body: JSON.stringify({ videos: [], message: 'No videos found for this hashtag.' })
       };
     }
 
-    const formatted = results.slice(0, maxVideos).map(video => ({
-      id: video.id || 'unknown',
-      desc: video.text || video.desc || 'No description',
-      stats: {
-        playCount: video.playCount || video.stats?.playCount || 0,
-        shareCount: video.shareCount || video.stats?.shareCount || 0,
-        diggCount: video.diggCount || video.stats?.diggCount || 0,
-        commentCount: video.commentCount || video.stats?.commentCount || 0
-      },
-      author: {
-        name: video.authorMeta?.name || video.author?.uniqueId || 'unknown',
-        avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
-      },
-      webVideoUrl: video.webVideoUrl || video.link || '',
-      coverUrl: video.videoMeta?.cover || video.video?.cover || ''
-    }));
+    // Format the results with all possible field names
+    const formatted = results.slice(0, maxVideos).map(video => {
+      console.log('Raw video data:', JSON.stringify(video).substring(0, 200));
+      
+      return {
+        id: video.id || video.videoId || 'unknown',
+        desc: video.text || video.description || video.desc || 'No description',
+        stats: {
+          playCount: video.playCount || video.stats?.playCount || 0,
+          shareCount: video.shareCount || video.stats?.shareCount || 0,
+          diggCount: video.diggCount || video.stats?.diggCount || video.likeCount || 0,
+          commentCount: video.commentCount || video.stats?.commentCount || 0
+        },
+        author: {
+          name: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
+          avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
+        },
+        webVideoUrl: video.webVideoUrl || video.link || '',
+        coverUrl: video.videoMeta?.cover || video.video?.cover || video.covers?.default || ''
+      };
+    });
 
     return {
       statusCode: 200,
@@ -117,14 +171,18 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error details:', error);
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify({ error: 'Server error: ' + error.message })
+      body: JSON.stringify({ 
+        error: 'Server error', 
+        message: error.message,
+        stack: error.stack 
+      })
     };
   }
 };
