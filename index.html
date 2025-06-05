@@ -604,6 +604,24 @@
         document.getElementById('loading').style.display = 'none';
     }
 </script>
-    </script>
+  <script>
+  async function testTikTokSearch() {
+    const response = await fetch('/.netlify/functions/tiktok-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword: 'fitness',
+        maxVideos: 5,
+        days: 7
+      })
+    });
+
+    const data = await response.json();
+    console.log('TikTok Data:', data);
+  }
+
+  testTikTokSearch();
+</script>
+  
 </body>
 </html>
