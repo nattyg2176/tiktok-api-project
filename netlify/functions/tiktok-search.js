@@ -17,11 +17,6 @@ exports.handler = async function(event, context) {
   try {
     const { keyword, maxVideos = 10, days = 7 } = JSON.parse(event.body);
 
-    // Debug logging
-    console.log('Received request:', { keyword, maxVideos, days });
-    console.log('API Key exists:', !!apiKey);
-    console.log('API Key length:', apiKey ? apiKey.length : 0);
-
     if (!keyword) {
       return {
         statusCode: 400,
@@ -45,8 +40,7 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Start the actor run with correct parameters
-    console.log('Starting Apify actor...');
+    // Start the actor run
     const runResponse = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs', {
       method: 'POST',
       headers: {
@@ -56,33 +50,20 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({
         hashtags: [keyword],
         resultsPerPage: maxVideos,
-        proxyCountryCode: "None"
+        proxyCountryCode: "None",
+        shouldDownloadCovers: false,
+        shouldDownloadVideos: false
       })
     });
 
-    console.log('Run response status:', runResponse.status);
-    const runResponseText = await runResponse.text();
-    console.log('Run response body:', runResponseText);
-
     if (!runResponse.ok) {
-      console.error('Apify run failed:', runResponseText);
-      return {
-        statusCode: 502,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ 
-          error: 'Apify actor run failed', 
-          details: runResponseText,
-          status: runResponse.status 
-        })
-      };
+      const errorText = await runResponse.text();
+      console.error('Apify run failed:', errorText);
+      throw new Error(`Apify error: ${runResponse.status}`);
     }
 
-    const runData = JSON.parse(runResponseText);
+    const runData = await runResponse.json();
     const runId = runData.data.id;
-    console.log('Run ID:', runId);
 
     // Wait for the run to complete
     let status = 'RUNNING';
@@ -98,33 +79,19 @@ exports.handler = async function(event, context) {
       
       const statusData = await statusResponse.json();
       status = statusData.data.status;
-      console.log(`Attempt ${attempts + 1}: Status = ${status}`);
       attempts++;
     }
 
     if (status !== 'SUCCEEDED') {
-      console.error('Scraping failed. Final status:', status);
-      return {
-        statusCode: 502,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({ 
-          error: 'Scraping failed or timed out',
-          finalStatus: status 
-        })
-      };
+      throw new Error('Scraping failed or timed out');
     }
 
     // Get results
-    console.log('Fetching results...');
     const resultsResponse = await fetch(`https://api.apify.com/v2/datasets/${runData.data.defaultDatasetId}/items`, {
       headers: { 'Authorization': `Bearer ${apiKey}` }
     });
 
     const results = await resultsResponse.json();
-    console.log('Results count:', results.length);
 
     if (!results || results.length === 0) {
       return {
@@ -133,31 +100,28 @@ exports.handler = async function(event, context) {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         },
-        body: JSON.stringify({ videos: [], message: 'No videos found for this hashtag.' })
+        body: JSON.stringify({ videos: [] })
       };
     }
 
-    // Format the results with all possible field names
-    const formatted = results.slice(0, maxVideos).map(video => {
-      console.log('Raw video data:', JSON.stringify(video).substring(0, 200));
-      
-      return {
-        id: video.id || video.videoId || 'unknown',
-        desc: video.text || video.description || video.desc || 'No description',
-        stats: {
-          playCount: video.playCount || video.stats?.playCount || 0,
-          shareCount: video.shareCount || video.stats?.shareCount || 0,
-          diggCount: video.diggCount || video.stats?.diggCount || video.likeCount || 0,
-          commentCount: video.commentCount || video.stats?.commentCount || 0
-        },
-        author: {
-          name: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
-          avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
-        },
-        webVideoUrl: video.webVideoUrl || video.link || '',
-        coverUrl: video.videoMeta?.cover || video.video?.cover || video.covers?.default || ''
-      };
-    });
+    // Format the results - CRITICAL: Include uniqueId
+    const formatted = results.slice(0, maxVideos).map(video => ({
+      id: video.id || video.videoId || 'unknown',
+      desc: video.text || video.description || video.desc || 'No description',
+      stats: {
+        playCount: video.playCount || video.stats?.playCount || 0,
+        shareCount: video.shareCount || video.stats?.shareCount || 0,
+        diggCount: video.diggCount || video.stats?.diggCount || video.likeCount || 0,
+        commentCount: video.commentCount || video.stats?.commentCount || 0
+      },
+      author: {
+        uniqueId: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
+        name: video.authorMeta?.name || video.author?.uniqueId || video.author?.nickname || 'unknown',
+        avatar: video.authorMeta?.avatar || video.author?.avatarThumb || ''
+      },
+      webVideoUrl: video.webVideoUrl || video.link || '',
+      coverUrl: video.videoMeta?.cover || video.video?.cover || video.covers?.default || ''
+    }));
 
     return {
       statusCode: 200,
@@ -171,18 +135,15 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
-    console.error('Error details:', error);
+    console.error('Error:', error.message);
+    // Return empty videos array instead of error to trigger demo data
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
-      body: JSON.stringify({ 
-        error: 'Server error', 
-        message: error.message,
-        stack: error.stack 
-      })
+      body: JSON.stringify({ videos: [] })
     };
   }
 };
