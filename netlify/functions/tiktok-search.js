@@ -1,10 +1,19 @@
+const fetch = require('node-fetch');
+
 exports.handler = async function(event, context) {
   const apiKey = process.env.APIFY_API_KEY;
 
   try {
     const { keyword, maxVideos = 10, days = 7 } = JSON.parse(event.body);
 
-    const response = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs', {
+    if (!keyword) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing keyword' }),
+      };
+    }
+
+    const startResponse = await fetch('https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,52 +27,71 @@ exports.handler = async function(event, context) {
       })
     });
 
-    if (!response.ok) {
-      console.error('Failed to start Apify task:', response.status);
-      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to start Apify task' }) };
+    const runStart = await startResponse.json();
+
+    if (!startResponse.ok || !runStart.data?.id) {
+      console.error('❌ Failed to start Apify run:', runStart);
+      return { statusCode: 502, body: JSON.stringify({ error: 'Could not start Apify actor' }) };
     }
 
-    const runData = await response.json();
-    const runId = runData.data.id;
-
+    const runId = runStart.data.id;
     let attempts = 0;
     let results = null;
 
     while (attempts < 30) {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Increased wait time
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const statusResponse = await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs/${runId}`, {
+      const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}`, {
         headers: { 'Authorization': `Bearer ${apiKey}` }
       });
 
-      const statusData = await statusResponse.json();
+      const statusData = await statusRes.json();
+      const status = statusData.data?.status;
 
-      if (statusData.data.status === 'SUCCEEDED') {
-        const resultsResponse = await fetch(`https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs/${runId}/dataset/items`, {
+      if (!statusRes.ok || !status) {
+        console.error('❌ Error checking status:', statusData);
+        return { statusCode: 502, body: JSON.stringify({ error: 'Could not check run status' }) };
+      }
+
+      if (status === 'SUCCEEDED') {
+        const resultRes = await fetch(`https://api.apify.com/v2/datasets/${statusData.data.defaultDatasetId}/items`, {
           headers: { 'Authorization': `Bearer ${apiKey}` }
         });
 
-        results = await resultsResponse.json();
+        if (!resultRes.ok) {
+          console.error('❌ Failed to get dataset items');
+          return { statusCode: 502, body: JSON.stringify({ error: 'Failed to load dataset results' }) };
+        }
+
+        results = await resultRes.json();
         break;
-      } else if (statusData.data.status === 'FAILED') {
-        console.error('Apify task failed');
-        return { statusCode: 500, body: JSON.stringify({ error: 'Apify task failed' }) };
+      }
+
+      if (status === 'FAILED') {
+        console.error('❌ Apify actor failed');
+        return { statusCode: 502, body: JSON.stringify({ error: 'Apify run failed' }) };
       }
 
       attempts++;
     }
 
     if (!results || results.length === 0) {
-      console.error('No results or timeout');
-      return { statusCode: 500, body: JSON.stringify({ error: 'Timeout waiting for results' }) };
+      console.error('❌ No videos found for that niche.');
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({ message: 'No viral videos found for this niche. Try a broader keyword.' })
+      };
     }
 
-    // Fixed field mappings for Clockworks scraper
-    const formattedVideos = results.slice(0, maxVideos).map(video => ({
+    const formatted = results.slice(0, maxVideos).map(video => ({
       id: video.id || video.videoId || 'unknown',
-      desc: video.text || video.description || video.desc || 'No description available',
+      desc: video.text || video.description || video.desc || 'No description',
       stats: {
-        playCount: video.playCount || video.plays || video.viewCount || 0,
+        playCount: video.playCount || video.viewCount || 0,
         shareCount: video.shareCount || video.shares || 0,
         diggCount: video.diggCount || video.likes || video.heartCount || 0,
         commentCount: video.commentCount || video.comments || 0
@@ -72,7 +100,7 @@ exports.handler = async function(event, context) {
       author: {
         uniqueId: video.authorMeta?.name || video.author?.uniqueId || video.username || 'unknown'
       },
-      webVideoUrl: video.webVideoUrl || video.url || '#',
+      webVideoUrl: video.webVideoUrl || video.url || '',
       coverUrl: video.covers?.default || video.videoMeta?.cover || video.thumbnail || ''
     }));
 
@@ -84,14 +112,14 @@ exports.handler = async function(event, context) {
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
-      body: JSON.stringify({ videos: formattedVideos })
+      body: JSON.stringify({ videos: formatted })
     };
 
   } catch (error) {
-    console.error('Function error:', error);
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ error: 'Internal server error: ' + error.message }) 
+    console.error('❌ Server error:', error.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server error: ' + error.message })
     };
   }
 };
